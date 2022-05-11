@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 19372b02a084acf48ac591853b169724
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - m_TargetGraphic: {instanceID: 0}
+  - wordFinderManager: {instanceID: 0}
+  - icon: {instanceID: 0}
+  - pause: {fileID: 21300000, guid: 912ea1733f2a2b947bc78295181e7e0e, type: 3}
+  - resume: {fileID: 21300000, guid: 0504f9982b976964ba3a1f0ff0dc530a, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
