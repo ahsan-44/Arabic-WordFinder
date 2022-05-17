@@ -11,6 +11,8 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
     [SerializeField]
+    private WordFinderWordData[] wordsInLevel;
+    [SerializeField]
     private WordFinderManager _wordFinderManager;
     [SerializeField]
     private WordFinderLevel _level;
@@ -20,16 +22,14 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI scoreText, highscoreText;
     [SerializeField]
     private TextAsset _wordListFile;
-    private List<string> _wordList;
-    public List<string> possibleWords;
+    private List<string> _wordList, possibleWords;
     
     //Level Progression variables
-    private int gridSize, timerBonus, playerScore, highscore, difficultyLevel;
-    public int currentLevel;
+    private int gridSize, timerBonus, playerScore, highscore, difficultyLevel, hintCounter, currentLevel;
     //
     public bool endlessMode { get; set;}
     [SerializeField]
-    private GameObject gameOverPanel, notEnoughStarsPanel, levelsHolder;
+    private GameObject gameOverPanel, notEnoughStarsPanel, levelsHolder, hintPrefab, hintObj;
     [SerializeField]
     private Image[] starsHolder;
     [SerializeField]
@@ -37,6 +37,7 @@ public class GameManager : MonoBehaviour
     private LevelObject[] allLevels;
     [SerializeField]
     private TextMeshProUGUI starsText;
+    public static Action<bool> enableHint;
 
     // playerScore = sum of remaining time at the end of each level
     // Each level is repeated 5 times.
@@ -137,6 +138,11 @@ public class GameManager : MonoBehaviour
         _level.ChangeLevelSettings(_config);
         //Start new level
         _wordFinderManager.StartGame(_level);
+        if (hintObj == null) //Hint deleted or not instantiated
+        {
+            hintObj = Instantiate(hintPrefab, transform);
+        }
+        GetWordsInLevel();
     }
 
     public void AddScore(int score)
@@ -278,6 +284,29 @@ public class GameManager : MonoBehaviour
             AdManager.instance.ShowInterstatialAd();
     }
 
+    void GetWordsInLevel()
+    {
+        wordsInLevel = _wordFinderManager.WordsInLevel();
+        print("Got words in level");
+    }
+
+    public void ShowHint()
+    {
+        if (hintCounter <= 3)
+        {
+            // hintCounter ++; //Need to add on unique hints only, currently unlimited
+            int wordToHint = 0;
+            while (wordsInLevel[wordToHint].Completed) //Go through all words in level until reached an incomplete one.
+            {
+                wordToHint ++;
+            }
+            HintPowerup.instance.ShowHintLetter(wordsInLevel[wordToHint].startingCoordinates); //Call hint fn
+        } else {
+            enableHint(false);
+            print("Hint limit reached"); //Add interaction for user (popup/disable hint button).
+        }
+    }
+
     void OnEnable()
     {
         //Subscribe to events
@@ -294,38 +323,5 @@ public class GameManager : MonoBehaviour
         _wordFinderManager.Finish -= GameOver;
         if (endlessMode)
             _wordFinderManager.EventHandler.OnWordCompleted -= CorrectWord;
-    }
-
-    //Leet code answers
-    public string RemoveDuplicates(string s, int k) 
-    {
-        string result = null;
-        Stack stack = new Stack();
-        char lastLetter = ' ';
-        int counter = 0;
-        for (int i = 0; i < s.Length; i++)
-        {
-            if (lastLetter == s[i]) //Check if duplicate value
-            {
-                counter ++; //Count how many duplicates in a row
-            } else {
-                counter = 0; //Reset counter if not reached
-            }
-            if (counter == k - 1) //Reached deletion limit
-            {
-                PopStacks(stack, k); //Loop delete k times
-            }
-            stack.Push(s[i]);
-        }
-        
-        return result;
-    }
-
-    void PopStacks(Stack targetStack, int count)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            targetStack.Pop();
-        }
     }
 }

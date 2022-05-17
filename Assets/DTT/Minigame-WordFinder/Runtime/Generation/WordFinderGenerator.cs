@@ -9,7 +9,7 @@ namespace DTT.MiniGame.WordFinder
     /// <summary>
     /// Generates the letter grid containing a set of words.
     /// </summary>
-    internal class WordFinderGenerator
+    public class WordFinderGenerator
     {
         #region Variables
         #region Consts
@@ -39,7 +39,7 @@ namespace DTT.MiniGame.WordFinder
         /// <summary>
         /// The words to put in the game.
         /// </summary>
-        internal WordFinderWordData[] Words { get; private set; }
+        public WordFinderWordData[] Words { get; private set; }
         #endregion
         #region private
         /// <summary>
@@ -287,6 +287,9 @@ namespace DTT.MiniGame.WordFinder
                 }
                 SetCellOnCoordinate(startingIndex, direction * letterIndex, word.Word[letterIndex]);
             }
+            //Added by me
+            //Word placement location is known here.
+            // Debug.Log("Word: " + word.Word + "Start: " + word.startingCoordinates + "End: " + word.endingCoordinates);
             return true;
         }
 
@@ -398,5 +401,13 @@ namespace DTT.MiniGame.WordFinder
             new Vector2(index % _currentLevel.Config.gridSize.x, Mathf.FloorToInt(index / _currentLevel.Config.gridSize.y));
         #endregion
         #endregion
+
+        
+
+        //Added by me
+        public void ShowHint()
+        {
+            
+        }
     }
 }

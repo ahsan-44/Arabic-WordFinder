@@ -1,4 +1,4 @@
-﻿using DTT.MinigameBase;
+using DTT.MinigameBase;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -298,6 +298,12 @@ namespace DTT.MiniGame.WordFinder
             EventHandler.WordCompleted(false, word);
             _currentResultData.wrongSelections++;
             _lineDrawer.FinishLine(false);
+        }
+
+        //Added by me
+        public WordFinderWordData[] WordsInLevel() //Return the list of words in the level
+        {
+            return _generator.Words;
         }
     }
 }
