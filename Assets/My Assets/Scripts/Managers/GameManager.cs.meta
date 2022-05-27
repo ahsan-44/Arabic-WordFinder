@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 5ca4bd4c7657d1e4e9de795529995be0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _wordFinderManager: {instanceID: 0}
+  - _level: {fileID: 11400000, guid: ecc39e960cdfc7a4c8f240eaabafc64c, type: 2}
+  - _wordListFile: {fileID: 4900000, guid: 217d8da9a8b938048b65100cf38c64c9, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
