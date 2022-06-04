@@ -8,18 +8,14 @@ public class PlayerPurchases : MonoBehaviour
 {
     public static PlayerPurchases instance;
 
-    public int currentCurrency {get; set;} = 0;
+    public int CurrentCurrency {get; set;} = 0;
     [SerializeField]
     private List<string> playerPurchases, defaultPurchases; //Add items owned by default here
-    [SerializeField]
-    private List<string> allPurchaseIDs;
-    [SerializeField]
-    private int[] allPurchasePrices;
-    [SerializeField]
-    private Dictionary<string, int> allPurchasesDict = new Dictionary<string, int>();
-    public static Action confirmRestoreAction, updateProductStatus;
+    [Tooltip("Add all in-game product details here")]
+    private Dictionary<string, int> allPurchasesDict = new Dictionary<string, int>(); //All products and their prices, used by the game's currency system (key = product ID, value = product in game price)
+    public static Action confirmRestoreAction;
     public static Action<int> updateCurrencyAction;
-    private string currency1000id = "com.ath.coins1000", currency2500id = "com.ath.coins2500", currency5000id = "com.ath.coins5000", currency10000id = "com.ath.coins10000";
+    private readonly string currency1000id = "com.kabakeb.coins1000", currency2500id = "com.kabakeb.coins2500", currency5000id = "com.kabakeb.coins5000", currency10000id = "com.kabakeb.coins10000";
 
     void Awake()
     {
@@ -31,22 +27,32 @@ public class PlayerPurchases : MonoBehaviour
         }
     }
 
-    public int getProductPrice(string productID) //Get the saved price of the product by product ID
+    private void Start()
     {
-        if (!allPurchasesDict.TryGetValue(productID, out int price)) //Product not found
+        //Add all products to the dictionary from the IAP manager
+        foreach (IAP_Product product in IAPManager.instance.allProducts)
         {
-            print("product not found, id: " + productID);
-            price = 0;
+            allPurchasesDict.Add(product.ID, product.price);
         }
-        return price;
     }
 
-    public void addToPurchases(string purchaseName)
+    public void GetProductPrice(IAP_Product product) //Get the saved price of the product by product ID
+    {
+        if (!allPurchasesDict.TryGetValue(product.ID, out int price)) //Product not found
+        {
+            print("product not found, id: " + product.ID);
+            price = 0;
+        }
+        print(price);
+        //return price;
+    }
+
+    public void AddToPurchases(string purchaseName)
     {
         playerPurchases.Add(purchaseName);
     }
 
-    public bool checkIfPurchased(string productID)
+    public bool CheckIfPurchased(string productID)
     {
         //Return purchase status of an item
         if (playerPurchases.Contains(productID))
@@ -59,92 +65,76 @@ public class PlayerPurchases : MonoBehaviour
 
     public void RestorePurchases()
     {
+        //TODO: Show confirmation
         playerPurchases.Clear(); //Delete saved purchases
         playerPurchases.AddRange(defaultPurchases); //Add default purchases back
-        resetCurrency();
+        ResetCurrency();
         PlayerPrefs.SetInt("PlayerWeapon", 0);
         PlayerPrefs.SetInt("Theme", 0);
         PlayerPrefs.SetInt("WeaponSkin", 0);
         confirmRestoreAction();
     }
 
-    //In game Currency
-    public void addCurrency(int number)
+    //Add in game Currency
+    public void AddCurrency(int amount)
     {
-        currentCurrency += number;
+        CurrentCurrency += amount;
     }
 
-    public void buyProduct(string productID, int cost)
+    public void BuyProductInGame(IAP_Product product) //Buy product with in game currency
     {
-        if (cost <= currentCurrency)
+        if (product.price <= CurrentCurrency)
         {
             //Buy success
-            addToPurchases(productID);
-            currentCurrency -= cost;
-            updateCurrency();
-            if (updateProductStatus != null)
-                {
-                    updateProductStatus();
-                }
+            AddToPurchases(product.ID); //Add to purchased products
+            CurrentCurrency -= product.price; //Deduct cost from currency owned
+            UpdateCurrency(); //Update currency UI
+            NotificationsManager.instance.ShowMessage("Purchase success!"); //Show confirmation popup
         } else {
             //Fail
-            print("Not enough currency");
+            NotificationsManager.instance.ShowMessage("Purchase failed! Not enough coins.");
         }
     }
 
-    //Buying recurring currency (ID not saved offline)
-    public void BuyCoins1000()
+    public void BuyProductReal(IAP_Product product) //Buy product with real money
     {
-        IAPManager.instance.BuyProduct(currency1000id);
-    }
-    public void BuyCoins2500()
-    {
-        IAPManager.instance.BuyProduct(currency2500id);
-    }
-    public void BuyCoins5000()
-    {
-        IAPManager.instance.BuyProduct(currency5000id);
-    }
-    public void BuyCoins10000()
-    {
-        IAPManager.instance.BuyProduct(currency10000id);
+        IAPManager.instance.BuyProduct(product.ID);
     }
 
-    public void confirmCurrencyPurchase(string currencyid)
+    public void ConfirmCurrencyPurchase(string currencyid)
     {
         if (string.Equals(currencyid, currency1000id))
         {
-            addCurrency(1000);
+            AddCurrency(1000);
         } else if (string.Equals(currencyid, currency2500id))
         {
-            addCurrency(2500);
+            AddCurrency(2500);
         } else if (string.Equals(currencyid, currency5000id))
         {
-            addCurrency(5000);
+            AddCurrency(5000);
         } else if (string.Equals(currencyid, currency10000id))
         {
-            addCurrency(10000);
+            AddCurrency(10000);
         }
     }
 
-    private void resetCurrency()
+    private void ResetCurrency()
     {
-        currentCurrency = 0;
+        CurrentCurrency = 0;
     }
 
-    public void updateCurrency()
+    public void UpdateCurrency()
     {
-        PlayerPrefs.SetInt("currency", currentCurrency);
-        if (updateCurrencyAction != null)
-            updateCurrencyAction(currentCurrency);
+        PlayerPrefs.SetInt("currency", CurrentCurrency);
+        updateCurrencyAction?.Invoke(CurrentCurrency);
     }
 
     void OnEnable()
     {
-        updateCurrency();
-        updateProductStatus += updateCurrency;
+
+        UpdateCurrency();
         //Load saved purchases
-        JsonUtility.FromJsonOverwrite(PlayerPrefs.GetString("savedPlayerData"), this);
+        JsonUtility.FromJsonOverwrite(PlayerPrefs.GetString("SavedPlayerPurchases"), this);
         //If no saved purchases, add default purchases
         if (playerPurchases.Count == 0)
         {
@@ -154,10 +144,9 @@ public class PlayerPurchases : MonoBehaviour
 
     void OnDisable()
     {
-        updateProductStatus -= updateCurrency;
         //Save player purchases offline
         string jsonData = JsonUtility.ToJson(this, false);
-        PlayerPrefs.SetString("savedPlayerData", jsonData);
+        PlayerPrefs.SetString("SavedPlayerPurchases", jsonData);
         PlayerPrefs.Save();
     }
 }

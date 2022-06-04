@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Purchasing;
-using System.Collections.Generic;
 
 
 public class IAPManager : MonoBehaviour, IStoreListener
@@ -12,19 +12,18 @@ public class IAPManager : MonoBehaviour, IStoreListener
     private static IExtensionProvider m_StoreExtensionProvider;
 
     //List all product IDs for initilization
-    [SerializeField]
-    private List<string> allPurchases;
-    public static Action PurchaseSucess, PurchaseFailed;
+    public IAP_Product[] allProducts;
 
     //Initilize all products
-    public void InitializePurchasing()
+    public void InitializePurchasing() //Add and initialize all products
     {
         if (IsInitialized()) { return; }
         var builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
 
-        foreach (string item in allPurchases)
+        foreach (IAP_Product product in allProducts) //Add products to builder with purchasing type (all currently are non consumable)
         {
-            builder.AddProduct(item, ProductType.NonConsumable); //Add products to builder with type (all are non consumable here)
+            if (!product.inGameProduct)
+                builder.AddProduct(product.ID, ProductType.NonConsumable);
         }
 
         UnityPurchasing.Initialize(this, builder);
@@ -35,7 +34,7 @@ public class IAPManager : MonoBehaviour, IStoreListener
         return m_StoreController != null && m_StoreExtensionProvider != null;
     }
 
-    public void BuyProduct(string productID) //Pass in product ID
+    public void BuyProduct(string productID) //Start buying the product with ID
     {
         BuyProductID(productID);
     }
@@ -46,13 +45,13 @@ public class IAPManager : MonoBehaviour, IStoreListener
         if (String.Equals(args.purchasedProduct.definition.id, args.purchasedProduct.definition.id, StringComparison.Ordinal))
         {
             // PlayerPurchases.instance.addToPurchases(args.purchasedProduct.definition.id); //Add to player purchase data
-            PlayerPurchases.instance.confirmCurrencyPurchase(args.purchasedProduct.definition.id);
-            PurchaseSucess();
-            PlayerPurchases.instance.updateCurrency();
+            PlayerPurchases.instance.ConfirmCurrencyPurchase(args.purchasedProduct.definition.id); //Send purchase confirmation
+            NotificationsManager.instance.ShowMessage("Purchase success!");
+            PlayerPurchases.instance.UpdateCurrency();
             print("confirming purchase id: " + args.purchasedProduct.definition.id);
         } else {
             Debug.Log("Purchase Failed");
-            PurchaseFailed();
+            NotificationsManager.instance.ShowMessage("Purchase failed!");
         }
         return PurchaseProcessingResult.Complete;
     }
@@ -91,11 +90,9 @@ public class IAPManager : MonoBehaviour, IStoreListener
                 Debug.Log(string.Format("Purchasing product asychronously: '{0}'", product.definition.id));
                 m_StoreController.InitiatePurchase(product);
             } else {
-                PurchaseFailed();
                 Debug.LogError(productId + " is not found or is not available for purchase");
             }
         } else {
-            PurchaseFailed();
             Debug.Log(productId + " is not initialized.");
         }
     }
@@ -141,6 +138,6 @@ public class IAPManager : MonoBehaviour, IStoreListener
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
     {
         Debug.Log(string.Format("OnPurchaseFailed: FAIL. Product: '{0}', PurchaseFailureReason: {1}", product.definition.storeSpecificId, failureReason));
-        PurchaseFailed();
+        NotificationsManager.instance.ShowMessage("Purchase failed!");
     }
 }

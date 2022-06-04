@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Advertisements;
 
-public class AdManager : MonoBehaviour
+public class AdManager : MonoBehaviour, IUnityAdsInitializationListener
 {
     public static AdManager instance;
     [SerializeField] string _androidGameId;
@@ -46,6 +46,7 @@ public class AdManager : MonoBehaviour
     public void OnInitializationComplete()
     {
         Debug.Log("Unity Ads initialization complete.");
+        CancelInvoke("InitializeAds");
         //Load interstatial ad after init
         InterstatialAd.instance.LoadAd();
     }
