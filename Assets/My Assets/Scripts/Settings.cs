@@ -15,7 +15,8 @@ public class Settings : MonoBehaviour
     public void ResetPlayerData()
     {
         PlayerPrefs.DeleteAll();
-        GameManager.instance.UpdateStarsText();
+        UIManager.instance.UpdateStarsText();
+        UIManager.instance.UpdateCoinsText();
     }
 
     //Toggle music button

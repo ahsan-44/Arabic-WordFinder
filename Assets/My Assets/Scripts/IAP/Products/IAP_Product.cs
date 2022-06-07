@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// A scriptable object class contains all the NON CONSUMABLE products of the game.
+/// A scriptable object class contains all the NON CONSUMABLE products of the game. (Can be expanded on later if we need to add other types of products)
 /// </summary>
 [CreateAssetMenu(fileName = "New Product", menuName = "IAP Product")]
 public class IAP_Product : ScriptableObject

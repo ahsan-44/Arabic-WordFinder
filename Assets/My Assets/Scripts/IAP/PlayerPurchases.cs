@@ -8,13 +8,11 @@ public class PlayerPurchases : MonoBehaviour
 {
     public static PlayerPurchases instance;
 
-    public int CurrentCurrency {get; set;} = 0;
+    public int CurrentCurrency;
     [SerializeField]
     private List<string> playerPurchases, defaultPurchases; //Add items owned by default here
     [Tooltip("Add all in-game product details here")]
-    private Dictionary<string, int> allPurchasesDict = new Dictionary<string, int>(); //All products and their prices, used by the game's currency system (key = product ID, value = product in game price)
-    public static Action confirmRestoreAction;
-    public static Action<int> updateCurrencyAction;
+    private readonly Dictionary<string, int> allPurchasesDict = new Dictionary<string, int>(); //All products and their prices, used by the game's currency system (key = product ID, value = product in game price)
     private readonly string currency1000id = "com.kabakeb.coins1000", currency2500id = "com.kabakeb.coins2500", currency5000id = "com.kabakeb.coins5000", currency10000id = "com.kabakeb.coins10000";
 
     void Awake()
@@ -69,34 +67,30 @@ public class PlayerPurchases : MonoBehaviour
         playerPurchases.Clear(); //Delete saved purchases
         playerPurchases.AddRange(defaultPurchases); //Add default purchases back
         ResetCurrency();
-        PlayerPrefs.SetInt("PlayerWeapon", 0);
-        PlayerPrefs.SetInt("Theme", 0);
-        PlayerPrefs.SetInt("WeaponSkin", 0);
-        confirmRestoreAction();
     }
 
     //Add in game Currency
     public void AddCurrency(int amount)
     {
         CurrentCurrency += amount;
+        UpdateCurrency();
     }
 
-    public void BuyProductInGame(IAP_Product product) //Buy product with in game currency
+    public void BuyProductInGame(IAP_Product product) //Buy product with in game currency from this script
     {
-        if (product.price <= CurrentCurrency)
+        if (product.price <= CurrentCurrency) //If player can afford the cost
         {
             //Buy success
             AddToPurchases(product.ID); //Add to purchased products
             CurrentCurrency -= product.price; //Deduct cost from currency owned
             UpdateCurrency(); //Update currency UI
             NotificationsManager.instance.ShowMessage("Purchase success!"); //Show confirmation popup
-        } else {
-            //Fail
+        } else { //Not enough coins
             NotificationsManager.instance.ShowMessage("Purchase failed! Not enough coins.");
         }
     }
 
-    public void BuyProductReal(IAP_Product product) //Buy product with real money
+    public void BuyProductReal(IAP_Product product) //Buy product with real money from IAP manager
     {
         IAPManager.instance.BuyProduct(product.ID);
     }
@@ -125,14 +119,11 @@ public class PlayerPurchases : MonoBehaviour
 
     public void UpdateCurrency()
     {
-        PlayerPrefs.SetInt("currency", CurrentCurrency);
-        updateCurrencyAction?.Invoke(CurrentCurrency);
+        UIManager.instance.UpdateCoinsText(); //Update UI
     }
 
     void OnEnable()
     {
-
-        UpdateCurrency();
         //Load saved purchases
         JsonUtility.FromJsonOverwrite(PlayerPrefs.GetString("SavedPlayerPurchases"), this);
         //If no saved purchases, add default purchases

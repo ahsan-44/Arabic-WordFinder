@@ -35,8 +35,6 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private Sprite starSprite, emptyStarSprite;
     private LevelObject[] allLevels;
-    [SerializeField]
-    private TextMeshProUGUI starsText;
     public static Action<bool> enableHint;
 
     // playerScore = sum of remaining time at the end of each level
@@ -75,7 +73,8 @@ public class GameManager : MonoBehaviour
         highscore = PlayerPrefs.GetInt("Highscore", 0);
         highscoreText.text = "Highscore: " + highscore;
         allLevels = levelsHolder.GetComponentsInChildren<LevelObject>();
-        UpdateStarsText();
+        UIManager.instance.UpdateStarsText(); //Update the UI
+        UIManager.instance.UpdateCoinsText(); //Update the UI
     }
 
     public void StartGameEndless()
@@ -240,12 +239,7 @@ public class GameManager : MonoBehaviour
         // print("New Stars Earned: " + newStarsEarned);
         PlayerPrefs.SetInt("PlayerStars", PlayerPrefs.GetInt("PlayerStars", 0) + newStarsEarned); //Adds new stars to current earned stars
         allLevels[levelNum].StarsEarned = newStarsEarned + allLevels[levelNum].StarsEarned; //Saves new number of stars earned
-        UpdateStarsText();
-    }
-
-    public void UpdateStarsText()
-    {
-        starsText.text = PlayerPrefs.GetInt("PlayerStars", 0).ToString();
+        UIManager.instance.UpdateStarsText(); //Update UI
     }
 
     public void RestartLevel()
@@ -275,7 +269,6 @@ public class GameManager : MonoBehaviour
         {
             starsHolder[i + numberOfStars].sprite = emptyStarSprite;
         }
-        // print ("Stars Earned: " + numberOfStars);
     }
 
     void ShowAd()
@@ -287,7 +280,6 @@ public class GameManager : MonoBehaviour
     void GetWordsInLevel()
     {
         wordsInLevel = _wordFinderManager.WordsInLevel();
-        print("Got words in level");
     }
 
     public void ShowHint()
@@ -300,7 +292,7 @@ public class GameManager : MonoBehaviour
             {
                 wordToHint ++;
             }
-            HintPowerup.instance.ShowHintLetter(wordsInLevel[wordToHint].startingCoordinates); //Call hint fn
+            HintPowerup.instance.ShowHintLetter(wordsInLevel[wordToHint].startingCoordinates); //Show hint for this word
         } else {
             enableHint(false);
             print("Hint limit reached"); //Add interaction for user (popup/disable hint button).
