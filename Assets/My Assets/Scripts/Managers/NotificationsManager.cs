@@ -8,7 +8,7 @@ public class NotificationsManager : MonoBehaviour
 {
     public static NotificationsManager instance;
     [SerializeField]
-    private GameObject messagesHolder;
+    private GameObject messagesHolder, storePopupHolder;
     [SerializeField]
     private TextMeshProUGUI msgText;
 
@@ -29,5 +29,11 @@ public class NotificationsManager : MonoBehaviour
     {
         msgText.text = msg;
         messagesHolder.SetActive(true);
+    }
+
+    public void ShowStorePopup(string msg)
+    {
+        msgText.text = msg;
+        storePopupHolder.SetActive(true);
     }
 }

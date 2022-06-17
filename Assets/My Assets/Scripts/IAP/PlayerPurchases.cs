@@ -7,12 +7,13 @@ using System;
 public class PlayerPurchases : MonoBehaviour
 {
     public static PlayerPurchases instance;
-
-    public int CurrentCurrency;
     [SerializeField]
-    private List<string> playerPurchases, defaultPurchases; //Add items owned by default here
+    IAP_Product hintPowerup, timePowerup; //Add powerup references here to check if they have been used
+    public int CurrentCurrency, timerBonusDefault = 15;
+    [SerializeField]
+    private List<IAP_Product> playerPurchases, defaultPurchases; //Add items owned by default here
     [Tooltip("Add all in-game product details here")]
-    private readonly Dictionary<string, int> allPurchasesDict = new Dictionary<string, int>(); //All products and their prices, used by the game's currency system (key = product ID, value = product in game price)
+    private readonly Dictionary<string, int> allPurchasesDict = new Dictionary<string, int>(); //All products and their prices, used by the game's currency system (key = product ID, value = product in game price) (Update to use IAP_Product class)
     private readonly string currency1000id = "com.kabakeb.coins1000", currency2500id = "com.kabakeb.coins2500", currency5000id = "com.kabakeb.coins5000", currency10000id = "com.kabakeb.coins10000";
 
     void Awake()
@@ -45,15 +46,15 @@ public class PlayerPurchases : MonoBehaviour
         //return price;
     }
 
-    public void AddToPurchases(string purchaseName)
+    public void AddToPurchases(IAP_Product product) //Add a product to the list of purchases
     {
-        playerPurchases.Add(purchaseName);
+        playerPurchases.Add(product);
     }
 
-    public bool CheckIfPurchased(string productID)
+    public bool CheckIfPurchased(IAP_Product product)
     {
         //Return purchase status of an item
-        if (playerPurchases.Contains(productID))
+        if (playerPurchases.Contains(product))
         {
             return true;
         } else {
@@ -81,12 +82,12 @@ public class PlayerPurchases : MonoBehaviour
         if (product.price <= CurrentCurrency) //If player can afford the cost
         {
             //Buy success
-            AddToPurchases(product.ID); //Add to purchased products
+            AddToPurchases(product); //Add to purchased products
             CurrentCurrency -= product.price; //Deduct cost from currency owned
             UpdateCurrency(); //Update currency UI
-            NotificationsManager.instance.ShowMessage("Purchase success!"); //Show confirmation popup
+            NotificationsManager.instance.ShowMessage("تم الشراء!"); //Show confirmation popup
         } else { //Not enough coins
-            NotificationsManager.instance.ShowMessage("Purchase failed! Not enough coins.");
+            NotificationsManager.instance.ShowMessage("لم يتم الشراء, لا يوجد رصيد كافي."); //Show confirmation popup
         }
     }
 
@@ -120,6 +121,28 @@ public class PlayerPurchases : MonoBehaviour
     public void UpdateCurrency()
     {
         UIManager.instance.UpdateCoinsText(); //Update UI
+    }
+
+    public void UsePowerup(IAP_Product powerup)
+    {
+        if (playerPurchases.Contains(powerup)) //If the powerup is among purchased products
+        {
+            //Use powerup
+            playerPurchases.Remove(powerup); //Remove powerup from purchased products
+            //Check which powerup it is, and use it
+            if(powerup == hintPowerup) //Hint powerup
+            {
+                GameManager.instance.ShowHint();
+            } else if (powerup == timePowerup) //Time powerup
+            {
+                GameManager.instance.AddTime(timerBonusDefault); //15 seconds is the current default
+            }
+        }
+    }
+
+    public int GetOwnedCount(IAP_Product product) //Get the count of a product in the list of purchases
+    {
+        return playerPurchases.FindAll(x => x == product).Count; //Find all products with the same ID and return the count
     }
 
     void OnEnable()

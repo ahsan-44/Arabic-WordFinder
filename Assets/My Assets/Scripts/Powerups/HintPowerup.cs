@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class HintPowerup : MonoBehaviour
 {
@@ -9,6 +10,10 @@ public class HintPowerup : MonoBehaviour
     private RectTransform rectTransform;
     private Image image;
     private Button button;
+    [SerializeField]
+    private TextMeshProUGUI ownedCounter;
+    [SerializeField]
+    private IAP_Product hintPowerup;
 
     void Awake()
     {
@@ -20,6 +25,12 @@ public class HintPowerup : MonoBehaviour
         rectTransform = GetComponent<RectTransform>();
         image = GetComponent<Image>();
         image.enabled = false;
+    }
+
+    public void ShowHint()
+    {
+        PlayerPurchases.instance.UsePowerup(hintPowerup);
+        AddTimePowerup.UpdateCounter(ownedCounter, hintPowerup);
     }
 
     public void ShowHintLetter(Vector2 hintLocation) //Sets the hint UI as child to the letter, letter coords same as from WordFinderUI class
@@ -39,6 +50,7 @@ public class HintPowerup : MonoBehaviour
     void OnEnable()
     {
         GameManager.enableHint += EnableButton;
+        AddTimePowerup.UpdateCounter(ownedCounter, hintPowerup);
     }
 
     void OnDisable()

@@ -146,6 +146,7 @@ public class GameManager : MonoBehaviour
 
     public void AddScore(int score)
     {
+        print("added score: " + score);
         playerScore += score;
         if (playerScore < 0)
         {
@@ -164,12 +165,14 @@ public class GameManager : MonoBehaviour
 
     public void AddTime(float time) //Called on correct word in endless mode, and as a powerup
     {
+        print("added time: " + time);
         _wordFinderManager.AddTime(time);
     }
 
 
     public void CorrectWord(bool value, string word)
     {
+        print("correct word: " + word + value);
         if (value) //Correct word
         {
             AddScore(difficultyLevel * timerBonus);

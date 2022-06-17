@@ -46,12 +46,11 @@ public class IAPManager : MonoBehaviour, IStoreListener
         {
             // PlayerPurchases.instance.addToPurchases(args.purchasedProduct.definition.id); //Add to player purchase data
             PlayerPurchases.instance.ConfirmCurrencyPurchase(args.purchasedProduct.definition.id); //Send purchase confirmation
-            NotificationsManager.instance.ShowMessage("Purchase success!");
+            NotificationsManager.instance.ShowMessage("تم الشراء!"); //Show confirmation popup
             PlayerPurchases.instance.UpdateCurrency();
             print("confirming purchase id: " + args.purchasedProduct.definition.id);
         } else {
-            Debug.Log("Purchase Failed");
-            NotificationsManager.instance.ShowMessage("Purchase failed!");
+            NotificationsManager.instance.ShowMessage("لم يتم الشراء."); //Show confirmation popup
         }
         return PurchaseProcessingResult.Complete;
     }
@@ -138,6 +137,6 @@ public class IAPManager : MonoBehaviour, IStoreListener
     public void OnPurchaseFailed(Product product, PurchaseFailureReason failureReason)
     {
         Debug.Log(string.Format("OnPurchaseFailed: FAIL. Product: '{0}', PurchaseFailureReason: {1}", product.definition.storeSpecificId, failureReason));
-        NotificationsManager.instance.ShowMessage("Purchase failed!");
+        NotificationsManager.instance.ShowMessage("لم يتم الشراء."); //Show confirmation popup
     }
 }
