@@ -117,10 +117,13 @@ namespace DTT.MiniGame.WordFinder
         private void Update()
         {
             if (!IsGameActive || IsPaused)
+            {
                 return;
+            } else {
+                PlayTime -= Time.deltaTime;
+                _currentResultData.timeTaken += Time.deltaTime;
+            }
 
-            PlayTime -= Time.deltaTime;
-            _currentResultData.timeTaken += Time.deltaTime;
             if (PlayTime <= 0)
                 ForceFinish();
         }

@@ -31,8 +31,14 @@ public class AddTimePowerup : MonoBehaviour
         }        
     }
 
-    void OnEnable()
+    void UpdateSelf()
     {
         UpdateCounter(ownedCounter, timePowerup);
+    }
+
+    void OnEnable()
+    {
+        UpdateSelf();
+        PlayerPurchases.UpdateUI += UpdateSelf; //Called when a powerup is bought
     }
 }

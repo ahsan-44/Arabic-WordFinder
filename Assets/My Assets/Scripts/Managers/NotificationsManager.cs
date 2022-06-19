@@ -8,7 +8,7 @@ public class NotificationsManager : MonoBehaviour
 {
     public static NotificationsManager instance;
     [SerializeField]
-    private GameObject messagesHolder, storePopupHolder;
+    private GameObject messagesHolder, storeHolder, gameoverHolder;
     [SerializeField]
     private TextMeshProUGUI msgText;
 
@@ -22,6 +22,14 @@ public class NotificationsManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        for (int i = 0; i < transform.childCount; i++) //Deactivate all tier 1 children on start
+        {
+            transform.GetChild(i).gameObject.SetActive(false);
+        }
+    }
+
     /// <summary>
     /// Sets and shows a popup message to the user
     /// </summary>
@@ -31,9 +39,13 @@ public class NotificationsManager : MonoBehaviour
         messagesHolder.SetActive(true);
     }
 
-    public void ShowStorePopup(string msg)
+    public void ShowStore()
     {
-        msgText.text = msg;
-        storePopupHolder.SetActive(true);
+        storeHolder.SetActive(true);
+    }
+
+    public void ShowGameOver()
+    {
+        gameoverHolder.SetActive(true);
     }
 }

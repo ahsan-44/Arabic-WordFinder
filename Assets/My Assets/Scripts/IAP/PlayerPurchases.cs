@@ -15,6 +15,7 @@ public class PlayerPurchases : MonoBehaviour
     [Tooltip("Add all in-game product details here")]
     private readonly Dictionary<string, int> allPurchasesDict = new Dictionary<string, int>(); //All products and their prices, used by the game's currency system (key = product ID, value = product in game price) (Update to use IAP_Product class)
     private readonly string currency1000id = "com.kabakeb.coins1000", currency2500id = "com.kabakeb.coins2500", currency5000id = "com.kabakeb.coins5000", currency10000id = "com.kabakeb.coins10000";
+    public static Action UpdateUI; //Action to update UI elements
 
     void Awake()
     {
@@ -86,6 +87,7 @@ public class PlayerPurchases : MonoBehaviour
             CurrentCurrency -= product.price; //Deduct cost from currency owned
             UpdateCurrency(); //Update currency UI
             NotificationsManager.instance.ShowMessage("تم الشراء!"); //Show confirmation popup
+            UpdateUI(); //Update UI
         } else { //Not enough coins
             NotificationsManager.instance.ShowMessage("لم يتم الشراء, لا يوجد رصيد كافي."); //Show confirmation popup
         }
@@ -137,6 +139,8 @@ public class PlayerPurchases : MonoBehaviour
             {
                 GameManager.instance.AddTime(timerBonusDefault); //15 seconds is the current default
             }
+        } else {
+            NotificationsManager.instance.ShowStore();
         }
     }
 
@@ -147,20 +151,23 @@ public class PlayerPurchases : MonoBehaviour
 
     void OnEnable()
     {
-        //Load saved purchases
-        JsonUtility.FromJsonOverwrite(PlayerPrefs.GetString("SavedPlayerPurchases"), this);
-        //If no saved purchases, add default purchases
-        if (playerPurchases.Count == 0)
+        JsonUtility.FromJsonOverwrite(PlayerPrefs.GetString("SavedPlayerPurchases"), playerPurchases); //Set the saved values to the list of purchases
+        CurrentCurrency = PlayerPrefs.GetInt("Currency", 0); //Set the saved currency value
+
+        //If it's the first time opening the game, add all default purchases to the list of purchases
+        if (PlayerPrefs.HasKey("SavedPlayerPurchases") == false)
         {
             playerPurchases.AddRange(defaultPurchases);
+            CurrentCurrency = 500; //Starting currency
         }
     }
 
     void OnDisable()
     {
-        //Save player purchases offline
-        string jsonData = JsonUtility.ToJson(this, false);
+        //Save player purchases to disk using JSON + player prefs
+        string jsonData = JsonUtility.ToJson(playerPurchases, false);
         PlayerPrefs.SetString("SavedPlayerPurchases", jsonData);
         PlayerPrefs.Save();
+        PlayerPrefs.SetInt("Currency", CurrentCurrency); //Set the saved currency value
     }
 }

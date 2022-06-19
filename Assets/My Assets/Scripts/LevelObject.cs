@@ -7,7 +7,26 @@ using TMPro;
 
 public class LevelObject : MonoBehaviour
 {
-    public int levelNum, stageNum, levelTime, starsRequired, playerStars, gridSize;
+    public int levelNum, stageNum, levelTime, starsRequired, playerStars;
+    private int gridSize;
+    public int GridSize
+    {
+        get
+        {
+            return gridSize;
+        }
+        set //Min size is 3x3, max is 11x11.
+        {
+            if (value < 3)
+            {
+                gridSize = 3;
+            } else if (value > 11) {
+                gridSize = 11;
+            } else {
+                gridSize = value;
+            }
+        }
+    }
     private int starsEarned;
     public int StarsEarned
     {
@@ -30,22 +49,23 @@ public class LevelObject : MonoBehaviour
     [SerializeField]
     private GameObject notEnoughStarsObj;
 
-    void Start()
+    public void SetLevel(int level, int stage) //Set values on instantiate
     {
-        levelNum = transform.GetSiblingIndex() + 9 * (stageNum - 1); //Sets level num to it's order in the hierarchy and stage
+        levelNum = level;
+        stageNum = stage;
         text.text = (levelNum + 1).ToString(); //Sets the text to the level number (+1 to remove level 0)
-        gridSize = stageNum + 2;
-        starsRequired = 15 * (stageNum - 1); //Number of stars required for each stage (currently 15 * stageNumber)
-        levelTime = gridSize * 10; //5 seconds for each word (gridSize = wordCount)
-        //Set UI to show amount of stars previously earned on level
+        GridSize = stageNum; //Min size is 3x3, max size is 11x11 (set in constructor)
+        starsRequired = 10 * (stageNum - 1); //Number of stars required for each stage (currently 15 * stageNumber)
+        levelTime = gridSize * 10; //Seconds to find each word (gridSize = wordCount)
+        //Set the UI and check star requirements
         GetStars();
         UpdateStarsUI();
         CheckIfPlayable();
     }
 
-    public void StartGame()
+    public void StartGame() //Called when clicked on this button
     {
-        GameManager.instance.ChangeGrid(gridSize, gridSize); //Changes the grid size
+        GameManager.instance.ChangeGrid(gridSize, gridSize); //Sets the grid size for the manager
         GameManager.instance.StartGameClassic(levelTime, levelNum); //Starts the game
     }
 
@@ -98,8 +118,8 @@ public class LevelObject : MonoBehaviour
         if (starsRequired <= playerStars) //If the player has earned enough stars to unlock this level
         {
             GetComponent<Image>().sprite = unlockedSprite; //Unlocks the level
-            text.color = Color.black;
             GetComponent<Button>().interactable = true;
+            text.alpha = 1f;
             ShowStarsUI();
         } else { //If the player has not earned enough stars to unlock this level
             GetComponent<Image>().sprite = lockedSprite; //Locks the level

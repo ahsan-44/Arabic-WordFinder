@@ -25,11 +25,11 @@ public class GameManager : MonoBehaviour
     private List<string> _wordList, possibleWords;
     
     //Level Progression variables
-    private int gridSize, timerBonus, playerScore, highscore, difficultyLevel, hintCounter, currentLevel;
+    private int gridSize, timerBonus, playerScore, highscore, difficultyLevel, currentLevel;
     //
     public bool endlessMode { get; set;}
     [SerializeField]
-    private GameObject gameOverPanel, notEnoughStarsPanel, levelsHolder, hintPrefab, hintObj;
+    private GameObject gameOverPanel, levelsHolder, hintPrefab, hintObj;
     [SerializeField]
     private Image[] starsHolder;
     [SerializeField]
@@ -72,20 +72,23 @@ public class GameManager : MonoBehaviour
         //Setup level UI
         highscore = PlayerPrefs.GetInt("Highscore", 0);
         highscoreText.text = "Highscore: " + highscore;
-        allLevels = levelsHolder.GetComponentsInChildren<LevelObject>();
         UIManager.instance.UpdateStarsText(); //Update the UI
         UIManager.instance.UpdateCoinsText(); //Update the UI
     }
 
     public void StartGameEndless()
     {
+        UIManager.instance.StartEndlessGame();
+        ResetGame();
         AddScore(0);
-        ChangeDifficulty(currentLevel);
+        ChangeDifficulty(1); //Start from level 1
         NewLevel(31f);
     }
 
     public void StartGameClassic(float startTime, int levelNum)
     {
+        allLevels = levelsHolder.GetComponentsInChildren<LevelObject>(); //Get all the level objects in the hierarchy
+        UIManager.instance.StartClassicGame();
         ResetGame();
         NewLevel(startTime);
         currentLevel = levelNum;
@@ -208,8 +211,8 @@ public class GameManager : MonoBehaviour
                 //1 star
                 starsEarned = 1;
             }
-            SetStars(starsEarned);
-            AddStarsEarned(starsEarned, currentLevel);
+            SetStars(starsEarned); //Set the stars earned to the UI
+            AddStarsEarned(starsEarned, currentLevel); //Save the stars earned
             ShowAd();
         }
     }
@@ -222,24 +225,23 @@ public class GameManager : MonoBehaviour
             LevelObject nextLevel = allLevels[currentLevel + 1];
             ResetGame(); //Reset the game
             //Start a new game with next level's settings
-            ChangeGrid(nextLevel.gridSize, nextLevel.gridSize);
+            ChangeGrid(nextLevel.GridSize, nextLevel.GridSize);
             StartGameClassic(nextLevel.levelTime, nextLevel.levelNum);
         } else {
-            notEnoughStarsPanel.SetActive(true);
+            NotificationsManager.instance.ShowMessage("لا توجد نجوم كافية للمستوى التالي.");
         }
     }
 
-    public void GameOver(WordFinderResult result)
+    public void GameOver(WordFinderResult result) //Called when timer is up, or level is complete
     {
         gameOverPanel.SetActive(true);
-        SetStars(0);
-        ShowAd();
+        // SetStars(0);
     }
 
-    void AddStarsEarned(int starsEarned, int levelNum)
+    void AddStarsEarned(int starsEarned, int levelNum) //Add stars earned to player's total stars count
     {
         int newStarsEarned = starsEarned - allLevels[levelNum].StarsEarned; //Actual stars earned (if player replayed the level and earned new stars they number won't overlap)
-        // print("New Stars Earned: " + newStarsEarned);
+        print("New Stars Earned: " + newStarsEarned);
         PlayerPrefs.SetInt("PlayerStars", PlayerPrefs.GetInt("PlayerStars", 0) + newStarsEarned); //Adds new stars to current earned stars
         allLevels[levelNum].StarsEarned = newStarsEarned + allLevels[levelNum].StarsEarned; //Saves new number of stars earned
         UIManager.instance.UpdateStarsText(); //Update UI
@@ -259,6 +261,7 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetInt("Highscore", highscore);
         gameOverPanel.SetActive(false);
         _wordFinderManager.ClearGame();
+        enableHint(true);
     }
 
     void SetStars(int numberOfStars) //Min 1 star, max 3 stars
@@ -277,7 +280,9 @@ public class GameManager : MonoBehaviour
     void ShowAd()
     {
         if (allLevels[currentLevel].stageNum > 1)
+        {
             AdManager.instance.ShowInterstatialAd();
+        }
     }
 
     void GetWordsInLevel()
@@ -287,19 +292,16 @@ public class GameManager : MonoBehaviour
 
     public void ShowHint()
     {
-        if (hintCounter <= 3)
+        //Limit is 1 hint per level
+        int wordToHint = 0;
+        while (wordsInLevel[wordToHint].Completed) //Go through all words in level until reached an incomplete one.
         {
-            // hintCounter ++; //Need to add on unique hints only, currently unlimited
-            int wordToHint = 0;
-            while (wordsInLevel[wordToHint].Completed) //Go through all words in level until reached an incomplete one.
-            {
-                wordToHint ++;
-            }
-            HintPowerup.instance.ShowHintLetter(wordsInLevel[wordToHint].startingCoordinates); //Show hint for this word
-        } else {
-            enableHint(false);
-            print("Hint limit reached"); //Add interaction for user (popup/disable hint button).
+            wordToHint ++;
         }
+        HintPowerup.instance.ShowHintLetter(wordsInLevel[wordToHint].startingCoordinates); //Show hint for this word
+        
+        //Disable hint button
+        enableHint(false);
     }
 
     void OnEnable()

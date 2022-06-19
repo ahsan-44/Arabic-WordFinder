@@ -6,7 +6,7 @@ MonoImporter:
   defaultReferences:
   - hintPowerup: {fileID: 11400000, guid: 90829dba3cd22ce4aa448112e837e585, type: 2}
   - timePowerup: {fileID: 11400000, guid: c881520821eb47c44ab697dfbcd43938, type: 2}
-  executionOrder: 0
+  executionOrder: -10
   icon: {instanceID: 0}
   userData: 
   assetBundleName: 
