@@ -261,7 +261,8 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetInt("Highscore", highscore);
         gameOverPanel.SetActive(false);
         _wordFinderManager.ClearGame();
-        enableHint(true);
+        if(enableHint != null)
+            enableHint(true);
     }
 
     void SetStars(int numberOfStars) //Min 1 star, max 3 stars
