@@ -23,9 +23,12 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private TextAsset _wordListFile;
     private List<string> _wordList, possibleWords;
+
+    [SerializeField]GameObject endlessModePanel;
     
     //Level Progression variables
-    private int gridSize, timerBonus, playerScore, highscore, difficultyLevel, hintCounter, currentLevel;
+    [SerializeField] private int timerBonus, scoreToAdd;
+    private int gridSize, playerScore, highscore, difficultyLevel, hintCounter, currentLevel;
     //
     public bool endlessMode { get; set;}
     [SerializeField]
@@ -60,6 +63,8 @@ public class GameManager : MonoBehaviour
     {
         currentLevel = 1;
         playerScore = 0;
+        scoreToAdd = 1;
+        timerBonus = 3;
     }
 
     void Start()
@@ -82,6 +87,7 @@ public class GameManager : MonoBehaviour
         AddScore(0);
         ChangeDifficulty(currentLevel);
         NewLevel(31f);
+        highscoreText.text = "Highscore: " + PlayerPrefs.GetInt("Highscore").ToString();
     }
 
     public void StartGameClassic(float startTime, int levelNum)
@@ -97,13 +103,13 @@ public class GameManager : MonoBehaviour
         if (currentLevel <= 3)
         {
             difficultyLevel = 1;
-            timerBonus = 3;
+            //timerBonus = 3;
         } else if (currentLevel <= 7) {
             difficultyLevel = 2;
-            timerBonus = 5;
+            //timerBonus = 5;
         } else {
             difficultyLevel = 3;
-            timerBonus = 7;
+            //timerBonus = 7;
         }
         //Set changes relative to difficultyLevel
         int wordCount;
@@ -159,7 +165,7 @@ public class GameManager : MonoBehaviour
             //Save highscore
             PlayerPrefs.SetInt("Highscore", highscore);
         }
-        scoreText.text = "Score: " + playerScore;
+        scoreText.text = "Score: " + playerScore.ToString();
     }
 
     public void AddTime(float time) //Called on correct word in endless mode, and as a powerup
@@ -172,11 +178,11 @@ public class GameManager : MonoBehaviour
     {
         if (value) //Correct word
         {
-            AddScore(difficultyLevel * timerBonus);
+            AddScore(scoreToAdd);
             AddTime(timerBonus);
         } else { //Wrong word
-            AddScore(-difficultyLevel * timerBonus);
-            AddTime(-timerBonus);
+            //AddScore(-difficultyLevel * timerBonus);
+            //AddTime(-timerBonus);
         }
     }
 
@@ -184,11 +190,13 @@ public class GameManager : MonoBehaviour
     {
         //Prints out the result of the level
         // Debug.Log(result.ToString());
+        currentLevel ++;
+        ChangeDifficulty(currentLevel);
+        NewLevel(0);
+        /*
         if (endlessMode) //If endless mode, go to next level
         {
-            currentLevel ++;
-            ChangeDifficulty(currentLevel);
-            NewLevel(0);
+
         } else { //Classic Mode: finish the level
             _wordFinderManager.ForceFinish();
             //Get completion %
@@ -208,7 +216,7 @@ public class GameManager : MonoBehaviour
             SetStars(starsEarned);
             AddStarsEarned(starsEarned, currentLevel);
             ShowAd();
-        }
+        }*/
     }
 
     public void NextLevel() //Go to next level in the classic mode
@@ -228,9 +236,12 @@ public class GameManager : MonoBehaviour
 
     public void GameOver(WordFinderResult result)
     {
-        gameOverPanel.SetActive(true);
-        SetStars(0);
-        ShowAd();
+        if(endlessModePanel.activeSelf)
+        {
+            gameOverPanel.SetActive(true);
+            //SetStars(0);
+            ShowAd();
+        }
     }
 
     void AddStarsEarned(int starsEarned, int levelNum)
@@ -244,7 +255,9 @@ public class GameManager : MonoBehaviour
 
     public void RestartLevel()
     {
-        StartGameClassic(allLevels[currentLevel].levelTime, currentLevel);
+        //StartGameClassic(allLevels[currentLevel].levelTime, currentLevel);
+        ResetGame();
+        StartGameEndless();
     }
 
     void ResetGame()
@@ -253,7 +266,7 @@ public class GameManager : MonoBehaviour
         playerScore = 0;
         highscore = 0;
         highscoreText.text = "Highscore: " + highscore;
-        PlayerPrefs.SetInt("Highscore", highscore);
+        //PlayerPrefs.SetInt("Highscore", highscore);
         gameOverPanel.SetActive(false);
         _wordFinderManager.ClearGame();
     }
@@ -273,8 +286,8 @@ public class GameManager : MonoBehaviour
 
     void ShowAd()
     {
-        if (allLevels[currentLevel].stageNum > 1)
-            AdManager.instance.ShowInterstatialAd();
+        //if (allLevels[currentLevel].stageNum > 1)
+        AdManager.instance.ShowInterstatialAd();
     }
 
     void GetWordsInLevel()
@@ -304,8 +317,7 @@ public class GameManager : MonoBehaviour
         //Subscribe to events
         _wordFinderManager.NextLevel += LevelComplete;
         _wordFinderManager.Finish += GameOver;
-        if (endlessMode)
-            _wordFinderManager.EventHandler.OnWordCompleted += CorrectWord;
+        _wordFinderManager.EventHandler.OnWordCompleted += CorrectWord;
     }
 
     void OnDisable()
@@ -313,7 +325,6 @@ public class GameManager : MonoBehaviour
         //Unsubscribe from events
         _wordFinderManager.NextLevel -= LevelComplete;
         _wordFinderManager.Finish -= GameOver;
-        if (endlessMode)
-            _wordFinderManager.EventHandler.OnWordCompleted -= CorrectWord;
+        _wordFinderManager.EventHandler.OnWordCompleted -= CorrectWord;
     }
 }
