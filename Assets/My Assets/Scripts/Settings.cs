@@ -15,7 +15,7 @@ public class Settings : MonoBehaviour
     public void ResetPlayerData()
     {
         PlayerPrefs.DeleteAll();
-        UIManager.instance.UpdateStarsText();
+        //UIManager.instance.UpdateStarsText();
         UIManager.instance.UpdateCoinsText();
     }
 

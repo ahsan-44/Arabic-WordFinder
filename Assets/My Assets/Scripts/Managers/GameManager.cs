@@ -75,19 +75,25 @@ public class GameManager : MonoBehaviour
         var AllWords = content.Split(new char[] { '\n', '\r', '\t' }, System.StringSplitOptions.RemoveEmptyEntries);
         _wordList = new List<string>(AllWords);
         //Setup level UI
-        highscore = PlayerPrefs.GetInt("Highscore", 0);
+        if(!PlayerPrefs.HasKey("Highscore"))
+        {
+            PlayerPrefs.SetInt("Highscore", 0);
+        }
+        highscore = PlayerPrefs.GetInt("Highscore");
         highscoreText.text = "Highscore: " + highscore;
         allLevels = levelsHolder.GetComponentsInChildren<LevelObject>();
-        UIManager.instance.UpdateStarsText(); //Update the UI
+        //UIManager.instance.UpdateStarsText(); //Update the UI
         UIManager.instance.UpdateCoinsText(); //Update the UI
     }
 
     public void StartGameEndless()
     {
+        ResetGame();
         AddScore(0);
         ChangeDifficulty(currentLevel);
         NewLevel(31f);
-        highscoreText.text = "Highscore: " + PlayerPrefs.GetInt("Highscore").ToString();
+        highscore = PlayerPrefs.GetInt("Highscore");
+        highscoreText.text = "Highscore: " + highscore.ToString();
     }
 
     public void StartGameClassic(float startTime, int levelNum)
@@ -250,7 +256,7 @@ public class GameManager : MonoBehaviour
         // print("New Stars Earned: " + newStarsEarned);
         PlayerPrefs.SetInt("PlayerStars", PlayerPrefs.GetInt("PlayerStars", 0) + newStarsEarned); //Adds new stars to current earned stars
         allLevels[levelNum].StarsEarned = newStarsEarned + allLevels[levelNum].StarsEarned; //Saves new number of stars earned
-        UIManager.instance.UpdateStarsText(); //Update UI
+        //UIManager.instance.UpdateStarsText(); //Update UI
     }
 
     public void RestartLevel()
