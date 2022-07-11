@@ -22,7 +22,9 @@ public class IAPManager : MonoBehaviour, IStoreListener
 
         foreach (IAP_Product product in allProducts) //Add products to builder with purchasing type (all currently are non consumable)
         {
-            if (!product.inGameProduct)
+            if (product.inGameProduct)
+                builder.AddProduct(product.ID, ProductType.Consumable);
+            else
                 builder.AddProduct(product.ID, ProductType.NonConsumable);
         }
 

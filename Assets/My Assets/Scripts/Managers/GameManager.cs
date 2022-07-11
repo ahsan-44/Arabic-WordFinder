@@ -6,6 +6,8 @@ using DTT.MinigameBase;
 using TMPro;
 using UnityEngine.UI;
 using System;
+using UnityEngine.Events;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -39,6 +41,7 @@ public class GameManager : MonoBehaviour
     private Sprite starSprite, emptyStarSprite;
     private LevelObject[] allLevels;
     public static Action<bool> enableHint;
+    private string isNoAds;
 
     // playerScore = sum of remaining time at the end of each level
     // Each level is repeated 5 times.
@@ -51,6 +54,12 @@ public class GameManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
+            GameServices.Instance.LogIn();
+            if(!PlayerPrefs.HasKey("isNoAds"))
+            {
+                PlayerPrefs.SetString("isNoAds", "False");
+            }
+            isNoAds = PlayerPrefs.GetString("isNoAds");
         }
         else
         {
@@ -85,6 +94,7 @@ public class GameManager : MonoBehaviour
         //UIManager.instance.UpdateStarsText(); //Update the UI
         UIManager.instance.UpdateCoinsText(); //Update the UI
     }
+
 
     public void StartGameEndless()
     {
@@ -170,6 +180,7 @@ public class GameManager : MonoBehaviour
             highscoreText.text = "Highscore: " + highscore;
             //Save highscore
             PlayerPrefs.SetInt("Highscore", highscore);
+            GameServices.Instance.SubmitScore(highscore, LeaderboardNames.HighScores, null);
         }
         scoreText.text = "Score: " + playerScore.ToString();
     }
@@ -293,7 +304,10 @@ public class GameManager : MonoBehaviour
     void ShowAd()
     {
         //if (allLevels[currentLevel].stageNum > 1)
-        AdManager.instance.ShowInterstatialAd();
+        if(isNoAds.Equals("False"))
+        {
+            AdManager.instance.ShowInterstatialAd();
+        }
     }
 
     void GetWordsInLevel()
@@ -316,6 +330,11 @@ public class GameManager : MonoBehaviour
             enableHint(false);
             print("Hint limit reached"); //Add interaction for user (popup/disable hint button).
         }
+    }
+
+    public void ShowLeaderboard()
+    {
+        GameServices.Instance.ShowLeaderboadsUI();
     }
 
     void OnEnable()
