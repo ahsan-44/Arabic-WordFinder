@@ -27,6 +27,11 @@ public class GameManager : MonoBehaviour
     private List<string> _wordList, possibleWords;
 
     [SerializeField]GameObject endlessModePanel;
+
+
+    //for Testing only
+    [SerializeField]
+    private TextMeshProUGUI ScoreTest, SecTest;
     
     //Level Progression variables
     [SerializeField] private int timerBonus, scoreToAdd;
@@ -35,6 +40,8 @@ public class GameManager : MonoBehaviour
     public bool endlessMode { get; set;}
     [SerializeField]
     private GameObject gameOverPanel, notEnoughStarsPanel, levelsHolder, hintPrefab, hintObj;
+    [SerializeField]
+    private GameObject removeAdsBtn;
     [SerializeField]
     private Image[] starsHolder;
     [SerializeField]
@@ -60,6 +67,11 @@ public class GameManager : MonoBehaviour
                 PlayerPrefs.SetString("isNoAds", "False");
             }
             isNoAds = PlayerPrefs.GetString("isNoAds");
+
+            if(isNoAds.Equals("True"))
+            {
+                RemoveNoAdsBtn();
+            }
         }
         else
         {
@@ -72,8 +84,6 @@ public class GameManager : MonoBehaviour
     {
         currentLevel = 1;
         playerScore = 0;
-        scoreToAdd = 1;
-        timerBonus = 3;
     }
 
     void Start()
@@ -93,6 +103,10 @@ public class GameManager : MonoBehaviour
         allLevels = levelsHolder.GetComponentsInChildren<LevelObject>();
         //UIManager.instance.UpdateStarsText(); //Update the UI
         UIManager.instance.UpdateCoinsText(); //Update the UI
+        scoreToAdd = 1;
+        timerBonus = 10;
+        SecTest.text = timerBonus.ToString();
+        ScoreTest.text = scoreToAdd.ToString();
     }
 
 
@@ -111,6 +125,13 @@ public class GameManager : MonoBehaviour
         ResetGame();
         NewLevel(startTime);
         currentLevel = levelNum;
+    }
+
+    public void RemoveNoAdsBtn()
+    {
+        removeAdsBtn.SetActive(false);
+        isNoAds = "True";
+        PlayerPrefs.SetString("isNoAds", isNoAds);
     }
 
     void ChangeDifficulty(int currentLevel) //Difficulty level scales with current level (level 1-3: easy; level 4-7: medium; level 8+: hard)
@@ -185,9 +206,9 @@ public class GameManager : MonoBehaviour
         scoreText.text = "Score: " + playerScore.ToString();
     }
 
-    public void AddTime(float time) //Called on correct word in endless mode, and as a powerup
+    public void AddTime() //Called on correct word in endless mode, and as a powerup
     {
-        _wordFinderManager.AddTime(time);
+        _wordFinderManager.AddTime(timerBonus);
     }
 
 
@@ -196,7 +217,7 @@ public class GameManager : MonoBehaviour
         if (value) //Correct word
         {
             AddScore(scoreToAdd);
-            AddTime(timerBonus);
+            AddTime();
         } else { //Wrong word
             //AddScore(-difficultyLevel * timerBonus);
             //AddTime(-timerBonus);
@@ -351,5 +372,42 @@ public class GameManager : MonoBehaviour
         _wordFinderManager.NextLevel -= LevelComplete;
         _wordFinderManager.Finish -= GameOver;
         _wordFinderManager.EventHandler.OnWordCompleted -= CorrectWord;
+    }
+
+
+
+
+
+
+
+    //for testing purposes
+    public void AddScoreTest()
+    {
+        scoreToAdd++;
+        ScoreTest.text = scoreToAdd.ToString();
+    }
+
+    public void MinusScoreTest()
+    {
+        if(scoreToAdd > 0)
+        {
+            scoreToAdd--;
+            ScoreTest.text = scoreToAdd.ToString();
+        }
+    }
+
+    public void AddSecTest()
+    {
+        timerBonus++;
+        SecTest.text = timerBonus.ToString();
+    }
+
+    public void MinusSecTest()
+    {
+        if(timerBonus > 0)
+        {
+            timerBonus--;
+            SecTest.text = timerBonus.ToString();
+        }
     }
 }

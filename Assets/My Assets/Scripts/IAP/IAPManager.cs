@@ -50,10 +50,15 @@ public class IAPManager : MonoBehaviour, IStoreListener
             PlayerPurchases.instance.ConfirmCurrencyPurchase(args.purchasedProduct.definition.id); //Send purchase confirmation
             NotificationsManager.instance.ShowMessage("Purchase success!");
             PlayerPurchases.instance.UpdateCurrency();
+            if(args.purchasedProduct.definition.id.Equals("com.kabakeb.noads"))
+            {
+                GameManager.instance.RemoveNoAdsBtn();
+            }
+            Debug.Log(args.purchasedProduct.definition.id);
             print("confirming purchase id: " + args.purchasedProduct.definition.id);
         } else {
             Debug.Log("Purchase Failed");
-            NotificationsManager.instance.ShowMessage("Purchase failed!");
+            NotificationsManager.instance.ShowMessage("Not Enough Coins!");
         }
         return PurchaseProcessingResult.Complete;
     }

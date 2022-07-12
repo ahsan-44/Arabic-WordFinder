@@ -7,6 +7,6 @@ public class AddTimePowerup : MonoBehaviour
     //Add time already in GameManager
     public void AddTime(int timeAdded)
     {
-        GameManager.instance.AddTime(timeAdded);
+        GameManager.instance.AddTime();
     }
 }
