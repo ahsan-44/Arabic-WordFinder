@@ -5,9 +5,6 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/DTT/Minigame-WordFinder/Demo/Scenes/DemoScene.unity
-    guid: da0c26c959f00974e965959cbe84f776
   - enabled: 1
     path: Assets/My Assets/Scenes/Main.unity
     guid: 31d62b88428ba0645af4cd858bd037c0

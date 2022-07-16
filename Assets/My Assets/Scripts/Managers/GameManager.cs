@@ -94,6 +94,8 @@ public class GameManager : MonoBehaviour
         var AllWords = content.Split(new char[] { '\n', '\r', '\t' }, System.StringSplitOptions.RemoveEmptyEntries);
         _wordList = new List<string>(AllWords);
         //Setup level UI
+
+        //check and set highscore data
         if(!PlayerPrefs.HasKey("Highscore"))
         {
             PlayerPrefs.SetInt("Highscore", 0);
@@ -109,7 +111,7 @@ public class GameManager : MonoBehaviour
         ScoreTest.text = scoreToAdd.ToString();
     }
 
-
+    // start game
     public void StartGameEndless()
     {
         ResetGame();
@@ -120,13 +122,8 @@ public class GameManager : MonoBehaviour
         highscoreText.text = "Highscore: " + highscore.ToString();
     }
 
-    public void StartGameClassic(float startTime, int levelNum)
-    {
-        ResetGame();
-        NewLevel(startTime);
-        currentLevel = levelNum;
-    }
 
+    //remove the no ads button on shop
     public void RemoveNoAdsBtn()
     {
         removeAdsBtn.SetActive(false);
@@ -161,32 +158,14 @@ public class GameManager : MonoBehaviour
         ChangeGrid(gridSize, wordCount);
     }
 
+    // changes the words grid as game difficulty rises
     public void ChangeGrid(int gridSize, int wordCount)
     {
         _config.gridSize = Vector2Int.one * gridSize;
         _config.wordCount = wordCount;
     }
 
-    void NewLevel(float startTime)
-    {
-        if (currentLevel != 1) //If not first level, continue timer
-        {
-            _config.maxTime = _wordFinderManager.PlayTime;
-        } else { //First level
-            _config.maxTime = startTime;
-        }
-        //Set level config
-        _config.possibleWords = _wordList;
-        _level.ChangeLevelSettings(_config);
-        //Start new level
-        _wordFinderManager.StartGame(_level);
-        if (hintObj == null) //Hint deleted or not instantiated
-        {
-            hintObj = Instantiate(hintPrefab, transform);
-        }
-        GetWordsInLevel();
-    }
-
+    //add score to player
     public void AddScore(int score)
     {
         playerScore += score;
@@ -206,12 +185,13 @@ public class GameManager : MonoBehaviour
         scoreText.text = "Score: " + playerScore.ToString();
     }
 
+    //add time for the player
     public void AddTime() //Called on correct word in endless mode, and as a powerup
     {
         _wordFinderManager.AddTime(timerBonus);
     }
 
-
+    //when player get the correct word
     public void CorrectWord(bool value, string word)
     {
         if (value) //Correct word
@@ -224,54 +204,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void LevelComplete(WordFinderResult result)
-    {
-        //Prints out the result of the level
-        // Debug.Log(result.ToString());
-        currentLevel ++;
-        ChangeDifficulty(currentLevel);
-        NewLevel(0);
-        /*
-        if (endlessMode) //If endless mode, go to next level
-        {
-
-        } else { //Classic Mode: finish the level
-            _wordFinderManager.ForceFinish();
-            //Get completion %
-            float scorePercentage = (_config.maxTime - result.TimeTaken) / _config.maxTime;
-            // Debug.Log("Score: " + scorePercentage + "%");
-            int starsEarned; //Calculate amount of stars earned according to completion %
-            if (scorePercentage > 0.6f) {
-                //Three stars if score > 60%
-                starsEarned = 3;
-            } else if (scorePercentage > 0.4f) {
-                //2 stars if score > 40%
-                starsEarned = 2;
-            } else {
-                //1 star
-                starsEarned = 1;
-            }
-            SetStars(starsEarned);
-            AddStarsEarned(starsEarned, currentLevel);
-            ShowAd();
-        }*/
-    }
-
-    public void NextLevel() //Go to next level in the classic mode
-    {
-        int currentStars = PlayerPrefs.GetInt("PlayerStars", 0);
-        if (currentLevel + 1 < allLevels.Length && currentStars >= allLevels[currentLevel + 1].starsRequired) //If there exists a next level & player meets minimum stars requirement
-        {
-            LevelObject nextLevel = allLevels[currentLevel + 1];
-            ResetGame(); //Reset the game
-            //Start a new game with next level's settings
-            ChangeGrid(nextLevel.gridSize, nextLevel.gridSize);
-            StartGameClassic(nextLevel.levelTime, nextLevel.levelNum);
-        } else {
-            notEnoughStarsPanel.SetActive(true);
-        }
-    }
-
+    // time is over
     public void GameOver(WordFinderResult result)
     {
         if(endlessModePanel.activeSelf)
@@ -282,15 +215,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void AddStarsEarned(int starsEarned, int levelNum)
-    {
-        int newStarsEarned = starsEarned - allLevels[levelNum].StarsEarned; //Actual stars earned (if player replayed the level and earned new stars they number won't overlap)
-        // print("New Stars Earned: " + newStarsEarned);
-        PlayerPrefs.SetInt("PlayerStars", PlayerPrefs.GetInt("PlayerStars", 0) + newStarsEarned); //Adds new stars to current earned stars
-        allLevels[levelNum].StarsEarned = newStarsEarned + allLevels[levelNum].StarsEarned; //Saves new number of stars earned
-        //UIManager.instance.UpdateStarsText(); //Update UI
-    }
-
+    
     public void RestartLevel()
     {
         //StartGameClassic(allLevels[currentLevel].levelTime, currentLevel);
@@ -309,18 +234,7 @@ public class GameManager : MonoBehaviour
         _wordFinderManager.ClearGame();
     }
 
-    void SetStars(int numberOfStars) //Min 1 star, max 3 stars
-    {
-        for (int i = 0; i < numberOfStars; i++) //Set full stars
-        {
-            starsHolder[i].sprite = starSprite;
-        }
-        int[] array = {0, 1};
-        for (int i = 0; i < 3 - numberOfStars; i++) //Set empty stars
-        {
-            starsHolder[i + numberOfStars].sprite = emptyStarSprite;
-        }
-    }
+
 
     void ShowAd()
     {
@@ -331,10 +245,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void GetWordsInLevel()
-    {
-        wordsInLevel = _wordFinderManager.WordsInLevel();
-    }
+
 
     public void ShowHint()
     {
@@ -408,6 +319,112 @@ public class GameManager : MonoBehaviour
         {
             timerBonus--;
             SecTest.text = timerBonus.ToString();
+        }
+    }
+
+
+
+    //not used
+    public void StartGameClassic(float startTime, int levelNum)
+    {
+        ResetGame();
+        NewLevel(startTime);
+        currentLevel = levelNum;
+    }
+
+    void NewLevel(float startTime)
+    {
+        if (currentLevel != 1) //If not first level, continue timer
+        {
+            _config.maxTime = _wordFinderManager.PlayTime;
+        } else { //First level
+            _config.maxTime = startTime;
+        }
+        //Set level config
+        _config.possibleWords = _wordList;
+        _level.ChangeLevelSettings(_config);
+        //Start new level
+        _wordFinderManager.StartGame(_level);
+        if (hintObj == null) //Hint deleted or not instantiated
+        {
+            hintObj = Instantiate(hintPrefab, transform);
+        }
+        GetWordsInLevel();
+    }
+
+    void GetWordsInLevel()
+    {
+        wordsInLevel = _wordFinderManager.WordsInLevel();
+    }
+
+    public void LevelComplete(WordFinderResult result)
+    {
+        //Prints out the result of the level
+        // Debug.Log(result.ToString());
+        currentLevel ++;
+        ChangeDifficulty(currentLevel);
+        NewLevel(0);
+        /*
+        if (endlessMode) //If endless mode, go to next level
+        {
+
+        } else { //Classic Mode: finish the level
+            _wordFinderManager.ForceFinish();
+            //Get completion %
+            float scorePercentage = (_config.maxTime - result.TimeTaken) / _config.maxTime;
+            // Debug.Log("Score: " + scorePercentage + "%");
+            int starsEarned; //Calculate amount of stars earned according to completion %
+            if (scorePercentage > 0.6f) {
+                //Three stars if score > 60%
+                starsEarned = 3;
+            } else if (scorePercentage > 0.4f) {
+                //2 stars if score > 40%
+                starsEarned = 2;
+            } else {
+                //1 star
+                starsEarned = 1;
+            }
+            SetStars(starsEarned);
+            AddStarsEarned(starsEarned, currentLevel);
+            ShowAd();
+        }*/
+    }
+
+    public void NextLevel() //Go to next level in the classic mode
+    {
+        int currentStars = PlayerPrefs.GetInt("PlayerStars", 0);
+        if (currentLevel + 1 < allLevels.Length && currentStars >= allLevels[currentLevel + 1].starsRequired) //If there exists a next level & player meets minimum stars requirement
+        {
+            LevelObject nextLevel = allLevels[currentLevel + 1];
+            ResetGame(); //Reset the game
+            //Start a new game with next level's settings
+            ChangeGrid(nextLevel.gridSize, nextLevel.gridSize);
+            StartGameClassic(nextLevel.levelTime, nextLevel.levelNum);
+        } else {
+            notEnoughStarsPanel.SetActive(true);
+        }
+    }
+
+    void AddStarsEarned(int starsEarned, int levelNum)
+    {
+        int newStarsEarned = starsEarned - allLevels[levelNum].StarsEarned; //Actual stars earned (if player replayed the level and earned new stars they number won't overlap)
+        // print("New Stars Earned: " + newStarsEarned);
+        PlayerPrefs.SetInt("PlayerStars", PlayerPrefs.GetInt("PlayerStars", 0) + newStarsEarned); //Adds new stars to current earned stars
+        allLevels[levelNum].StarsEarned = newStarsEarned + allLevels[levelNum].StarsEarned; //Saves new number of stars earned
+        //UIManager.instance.UpdateStarsText(); //Update UI
+    }
+
+
+    void SetStars(int numberOfStars) //Min 1 star, max 3 stars
+    {
+        for (int i = 0; i < numberOfStars; i++) //Set full stars
+        {
+            starsHolder[i].sprite = starSprite;
+        }
+        int[] array = {0, 1};
+        for (int i = 0; i < 3 - numberOfStars; i++) //Set empty stars
+        {
+            starsHolder[i + numberOfStars].sprite = emptyStarSprite;
         }
     }
 }
