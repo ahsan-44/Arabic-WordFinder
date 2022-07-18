@@ -6,6 +6,8 @@ using DTT.MinigameBase;
 using TMPro;
 using UnityEngine.UI;
 using System;
+using UnityEngine.Events;
+
 
 public class GameManager : MonoBehaviour
 {
@@ -19,23 +21,34 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private WordFinderConfig _config;
     [SerializeField]
-    private TextMeshProUGUI scoreText, highscoreText;
+    private TextMeshProUGUI scoreText, highscoreText, gameOverScore;
     [SerializeField]
     private TextAsset _wordListFile;
     private List<string> _wordList, possibleWords;
+
+    [SerializeField]GameObject endlessModePanel;
+
+
+    //for Testing only
+    [SerializeField]
+    private TextMeshProUGUI ScoreTest, SecTest;
     
     //Level Progression variables
-    private int gridSize, timerBonus, playerScore, highscore, difficultyLevel, hintCounter, currentLevel;
+    [SerializeField] private int timerBonus, scoreToAdd; //score and time to be added when correct word
+    private int gridSize, playerScore, highscore, difficultyLevel, hintCounter, currentLevel;
     //
     public bool endlessMode { get; set;}
     [SerializeField]
     private GameObject gameOverPanel, notEnoughStarsPanel, levelsHolder, hintPrefab, hintObj;
+    [SerializeField]
+    private GameObject removeAdsBtn;
     [SerializeField]
     private Image[] starsHolder;
     [SerializeField]
     private Sprite starSprite, emptyStarSprite;
     private LevelObject[] allLevels;
     public static Action<bool> enableHint;
+    private string isNoAds;
 
     // playerScore = sum of remaining time at the end of each level
     // Each level is repeated 5 times.
@@ -48,6 +61,17 @@ public class GameManager : MonoBehaviour
         if (instance == null)
         {
             instance = this;
+            GameServices.Instance.LogIn();
+            if(!PlayerPrefs.HasKey("isNoAds"))
+            {
+                PlayerPrefs.SetString("isNoAds", "False");
+            }
+            isNoAds = PlayerPrefs.GetString("isNoAds");
+
+            if(isNoAds.Equals("True"))
+            {
+                RemoveNoAdsBtn();
+            }
         }
         else
         {
@@ -67,28 +91,44 @@ public class GameManager : MonoBehaviour
         //Import word list from .txt file
         var content = _wordListFile.text;
         //Clean up text file and add to a list
-        var AllWords = content.Split(new char[] { '\n', '\r', '\t' }, System.StringSplitOptions.RemoveEmptyEntries);
+        var AllWords = content.Split(new char[] { '\n', '\r', '\t', ' '}, System.StringSplitOptions.RemoveEmptyEntries);
         _wordList = new List<string>(AllWords);
         //Setup level UI
-        highscore = PlayerPrefs.GetInt("Highscore", 0);
+
+        //check and set highscore data
+        if(!PlayerPrefs.HasKey("Highscore"))
+        {
+            PlayerPrefs.SetInt("Highscore", 0);
+        }
+        highscore = PlayerPrefs.GetInt("Highscore");
         highscoreText.text = "Highscore: " + highscore;
         allLevels = levelsHolder.GetComponentsInChildren<LevelObject>();
-        UIManager.instance.UpdateStarsText(); //Update the UI
+        //UIManager.instance.UpdateStarsText(); //Update the UI
         UIManager.instance.UpdateCoinsText(); //Update the UI
+        scoreToAdd = 1;
+        timerBonus = 10;
+        SecTest.text = timerBonus.ToString();
+        ScoreTest.text = scoreToAdd.ToString();
     }
 
+    // start game
     public void StartGameEndless()
     {
+        ResetGame();
         AddScore(0);
         ChangeDifficulty(currentLevel);
         NewLevel(31f);
+        highscore = PlayerPrefs.GetInt("Highscore");
+        highscoreText.text = "Highscore: " + highscore.ToString();
     }
 
-    public void StartGameClassic(float startTime, int levelNum)
+
+    //remove the no ads button on shop
+    public void RemoveNoAdsBtn()
     {
-        ResetGame();
-        NewLevel(startTime);
-        currentLevel = levelNum;
+        removeAdsBtn.SetActive(false);
+        isNoAds = "True";
+        PlayerPrefs.SetString("isNoAds", isNoAds);
     }
 
     void ChangeDifficulty(int currentLevel) //Difficulty level scales with current level (level 1-3: easy; level 4-7: medium; level 8+: hard)
@@ -97,13 +137,13 @@ public class GameManager : MonoBehaviour
         if (currentLevel <= 3)
         {
             difficultyLevel = 1;
-            timerBonus = 3;
+            //timerBonus = 3;
         } else if (currentLevel <= 7) {
             difficultyLevel = 2;
-            timerBonus = 5;
+            //timerBonus = 5;
         } else {
             difficultyLevel = 3;
-            timerBonus = 7;
+            //timerBonus = 7;
         }
         //Set changes relative to difficultyLevel
         int wordCount;
@@ -118,11 +158,117 @@ public class GameManager : MonoBehaviour
         ChangeGrid(gridSize, wordCount);
     }
 
+    // changes the words grid as game difficulty rises
     public void ChangeGrid(int gridSize, int wordCount)
     {
         _config.gridSize = Vector2Int.one * gridSize;
         _config.wordCount = wordCount;
     }
+
+    //add score to player
+    public void AddScore(int score)
+    {
+        playerScore += score;
+        if (playerScore < 0)
+        {
+            playerScore = 0;
+        }
+        //Update highscore
+        if (playerScore > highscore)
+        {
+            highscore = playerScore;
+            highscoreText.text = "Highscore: " + highscore;
+            //Save highscore
+            PlayerPrefs.SetInt("Highscore", highscore);
+            GameServices.Instance.SubmitScore(highscore, LeaderboardNames.HighScores, null);
+        }
+        scoreText.text = "Score: " + playerScore.ToString();
+    }
+
+    //add time for the player
+    public void AddTime() //Called on correct word in endless mode, and as a powerup
+    {
+        _wordFinderManager.AddTime(timerBonus);
+    }
+
+    //when player get the correct word
+    public void CorrectWord(bool value, string word)
+    {
+        if (value) //Correct word
+        {
+            AddScore(scoreToAdd); //Add score to playerscore
+            AddTime();  //add time to the timer
+        } else { //Wrong word
+            //AddScore(-difficultyLevel * timerBonus);
+            //AddTime(-timerBonus);
+        }
+    }
+
+    // time is over
+    public void GameOver(WordFinderResult result)
+    {
+        if(endlessModePanel.activeSelf)
+        {
+            gameOverScore.text = "Score: " + playerScore.ToString();
+            gameOverPanel.SetActive(true);
+            ShowAd();
+        }
+    }
+
+    
+    public void RestartLevel()
+    {
+        //StartGameClassic(allLevels[currentLevel].levelTime, currentLevel);
+        ResetGame();
+        StartGameEndless();
+    }
+
+    void ResetGame()
+    {
+        currentLevel = 1;
+        playerScore = 0;
+        highscore = 0;
+        highscoreText.text = "Highscore: " + highscore;
+        //PlayerPrefs.SetInt("Highscore", highscore);
+        gameOverPanel.SetActive(false);
+        _wordFinderManager.ClearGame();
+    }
+
+
+
+    void ShowAd()
+    {
+        //if (allLevels[currentLevel].stageNum > 1)
+        if(isNoAds.Equals("False"))
+        {
+            AdManager.instance.ShowInterstatialAd();
+        }
+    }
+
+
+
+    public void ShowHint()
+    {
+        if (hintCounter <= 3)
+        {
+            // hintCounter ++; //Need to add on unique hints only, currently unlimited
+            int wordToHint = 0;
+            while (wordsInLevel[wordToHint].Completed) //Go through all words in level until reached an incomplete one.
+            {
+                wordToHint ++;
+            }
+            HintPowerup.instance.ShowHintLetter(wordsInLevel[wordToHint].startingCoordinates); //Show hint for this word
+        } else {
+            enableHint(false);
+            print("Hint limit reached"); //Add interaction for user (popup/disable hint button).
+        }
+    }
+
+    public void ShowLeaderboard()
+    {
+        GameServices.Instance.ShowLeaderboadsUI();
+    }
+
 
     void NewLevel(float startTime)
     {
@@ -144,51 +290,87 @@ public class GameManager : MonoBehaviour
         GetWordsInLevel();
     }
 
-    public void AddScore(int score)
+    void GetWordsInLevel()
     {
-        playerScore += score;
-        if (playerScore < 0)
-        {
-            playerScore = 0;
-        }
-        //Update highscore
-        if (playerScore > highscore)
-        {
-            highscore = playerScore;
-            highscoreText.text = "Highscore: " + highscore;
-            //Save highscore
-            PlayerPrefs.SetInt("Highscore", highscore);
-        }
-        scoreText.text = "Score: " + playerScore;
-    }
-
-    public void AddTime(float time) //Called on correct word in endless mode, and as a powerup
-    {
-        _wordFinderManager.AddTime(time);
+        wordsInLevel = _wordFinderManager.WordsInLevel();
     }
 
 
-    public void CorrectWord(bool value, string word)
+
+    void OnEnable()
     {
-        if (value) //Correct word
+        //Subscribe to events
+        _wordFinderManager.NextLevel += LevelComplete;
+        _wordFinderManager.Finish += GameOver;
+        _wordFinderManager.EventHandler.OnWordCompleted += CorrectWord;
+    }
+
+    void OnDisable()
+    {
+        //Unsubscribe from events
+        _wordFinderManager.NextLevel -= LevelComplete;
+        _wordFinderManager.Finish -= GameOver;
+        _wordFinderManager.EventHandler.OnWordCompleted -= CorrectWord;
+    }
+
+
+
+
+
+
+
+    //for testing purposes
+    public void AddScoreTest()
+    {
+        scoreToAdd++;
+        ScoreTest.text = scoreToAdd.ToString();
+    }
+
+    public void MinusScoreTest()
+    {
+        if(scoreToAdd > 0)
         {
-            AddScore(difficultyLevel * timerBonus);
-            AddTime(timerBonus);
-        } else { //Wrong word
-            AddScore(-difficultyLevel * timerBonus);
-            AddTime(-timerBonus);
+            scoreToAdd--;
+            ScoreTest.text = scoreToAdd.ToString();
         }
+    }
+
+    public void AddSecTest()
+    {
+        timerBonus++;
+        SecTest.text = timerBonus.ToString();
+    }
+
+    public void MinusSecTest()
+    {
+        if(timerBonus > 0)
+        {
+            timerBonus--;
+            SecTest.text = timerBonus.ToString();
+        }
+    }
+
+
+
+    //not used
+    public void StartGameClassic(float startTime, int levelNum)
+    {
+        ResetGame();
+        NewLevel(startTime);
+        currentLevel = levelNum;
     }
 
     public void LevelComplete(WordFinderResult result)
     {
         //Prints out the result of the level
         // Debug.Log(result.ToString());
+        currentLevel ++;
+        ChangeDifficulty(currentLevel);
+        NewLevel(0);
+        /*
         if (endlessMode) //If endless mode, go to next level
         {
-            currentLevel ++;
-            ChangeDifficulty(currentLevel);
-            NewLevel(0);
+
         } else { //Classic Mode: finish the level
             _wordFinderManager.ForceFinish();
             //Get completion %
@@ -208,7 +390,7 @@ public class GameManager : MonoBehaviour
             SetStars(starsEarned);
             AddStarsEarned(starsEarned, currentLevel);
             ShowAd();
-        }
+        }*/
     }
 
     public void NextLevel() //Go to next level in the classic mode
@@ -226,37 +408,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void GameOver(WordFinderResult result)
-    {
-        gameOverPanel.SetActive(true);
-        SetStars(0);
-        ShowAd();
-    }
-
     void AddStarsEarned(int starsEarned, int levelNum)
     {
         int newStarsEarned = starsEarned - allLevels[levelNum].StarsEarned; //Actual stars earned (if player replayed the level and earned new stars they number won't overlap)
         // print("New Stars Earned: " + newStarsEarned);
         PlayerPrefs.SetInt("PlayerStars", PlayerPrefs.GetInt("PlayerStars", 0) + newStarsEarned); //Adds new stars to current earned stars
         allLevels[levelNum].StarsEarned = newStarsEarned + allLevels[levelNum].StarsEarned; //Saves new number of stars earned
-        UIManager.instance.UpdateStarsText(); //Update UI
+        //UIManager.instance.UpdateStarsText(); //Update UI
     }
 
-    public void RestartLevel()
-    {
-        StartGameClassic(allLevels[currentLevel].levelTime, currentLevel);
-    }
-
-    void ResetGame()
-    {
-        currentLevel = 1;
-        playerScore = 0;
-        highscore = 0;
-        highscoreText.text = "Highscore: " + highscore;
-        PlayerPrefs.SetInt("Highscore", highscore);
-        gameOverPanel.SetActive(false);
-        _wordFinderManager.ClearGame();
-    }
 
     void SetStars(int numberOfStars) //Min 1 star, max 3 stars
     {
@@ -269,51 +429,5 @@ public class GameManager : MonoBehaviour
         {
             starsHolder[i + numberOfStars].sprite = emptyStarSprite;
         }
-    }
-
-    void ShowAd()
-    {
-        if (allLevels[currentLevel].stageNum > 1)
-            AdManager.instance.ShowInterstatialAd();
-    }
-
-    void GetWordsInLevel()
-    {
-        wordsInLevel = _wordFinderManager.WordsInLevel();
-    }
-
-    public void ShowHint()
-    {
-        if (hintCounter <= 3)
-        {
-            // hintCounter ++; //Need to add on unique hints only, currently unlimited
-            int wordToHint = 0;
-            while (wordsInLevel[wordToHint].Completed) //Go through all words in level until reached an incomplete one.
-            {
-                wordToHint ++;
-            }
-            HintPowerup.instance.ShowHintLetter(wordsInLevel[wordToHint].startingCoordinates); //Show hint for this word
-        } else {
-            enableHint(false);
-            print("Hint limit reached"); //Add interaction for user (popup/disable hint button).
-        }
-    }
-
-    void OnEnable()
-    {
-        //Subscribe to events
-        _wordFinderManager.NextLevel += LevelComplete;
-        _wordFinderManager.Finish += GameOver;
-        if (endlessMode)
-            _wordFinderManager.EventHandler.OnWordCompleted += CorrectWord;
-    }
-
-    void OnDisable()
-    {
-        //Unsubscribe from events
-        _wordFinderManager.NextLevel -= LevelComplete;
-        _wordFinderManager.Finish -= GameOver;
-        if (endlessMode)
-            _wordFinderManager.EventHandler.OnWordCompleted -= CorrectWord;
     }
 }

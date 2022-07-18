@@ -84,7 +84,15 @@ public class PlayerPurchases : MonoBehaviour
             AddToPurchases(product.ID); //Add to purchased products
             CurrentCurrency -= product.price; //Deduct cost from currency owned
             UpdateCurrency(); //Update currency UI
-            NotificationsManager.instance.ShowMessage("Purchase success!"); //Show confirmation popup
+            if(product.ID.Equals("hint_powerup"))
+            {
+                GameManager.instance.ShowHint();
+            }
+            else if(product.ID.Equals("time_powerup"))
+            {
+                GameManager.instance.AddTime();
+            }
+            //NotificationsManager.instance.ShowMessage("Purchase success!"); //Show confirmation popup
         } else { //Not enough coins
             NotificationsManager.instance.ShowMessage("Purchase failed! Not enough coins.");
         }

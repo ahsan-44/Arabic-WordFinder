@@ -24,7 +24,7 @@ public class UIManager : MonoBehaviour
 
     public void UpdateStarsText()
     {
-        starsText.text = PlayerPrefs.GetInt("PlayerStars", 0).ToString();
+        //starsText.text = PlayerPrefs.GetInt("PlayerStars", 0).ToString();
     }
 
     public void UpdateCoinsText()

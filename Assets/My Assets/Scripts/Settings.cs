@@ -9,13 +9,15 @@ public class Settings : MonoBehaviour
     private Color[] toggleColors; //0 for on color, 1 for off color
     [SerializeField]
     private Image musicToggleImg, sfxToggleImg;
+    [SerializeField]
+    private Sprite on, off;
     private bool musicON, sfxON;
 
 
     public void ResetPlayerData()
     {
         PlayerPrefs.DeleteAll();
-        UIManager.instance.UpdateStarsText();
+        //UIManager.instance.UpdateStarsText();
         UIManager.instance.UpdateCoinsText();
     }
 
@@ -47,7 +49,7 @@ public class Settings : MonoBehaviour
     {
         AudioManager.instance.SetMixerVolume(AudioManager.instance.musicMixer, 0);
         PlayerPrefs.SetInt("Music", 1);
-        musicToggleImg.color = toggleColors[0];
+        musicToggleImg.sprite = on;
         musicON = true;
         // print("Music on");
     }
@@ -56,7 +58,7 @@ public class Settings : MonoBehaviour
     {
         AudioManager.instance.SetMixerVolume(AudioManager.instance.musicMixer, -80);
         PlayerPrefs.SetInt("Music", 0);
-        musicToggleImg.color = toggleColors[1];
+        musicToggleImg.sprite = off;
         musicON = false;
         // print("Music off ");
     }
@@ -65,7 +67,7 @@ public class Settings : MonoBehaviour
     {
         AudioManager.instance.SetMixerVolume(AudioManager.instance.SFXMixer, 0);
         PlayerPrefs.SetInt("SFX", 1);
-        sfxToggleImg.color = toggleColors[0];
+        sfxToggleImg.sprite = on;
         sfxON = true;
         // print("SFX on");
     }
@@ -74,7 +76,7 @@ public class Settings : MonoBehaviour
     {
         AudioManager.instance.SetMixerVolume(AudioManager.instance.SFXMixer, -80);
         PlayerPrefs.SetInt("SFX", 0);
-        sfxToggleImg.color = toggleColors[1];
+        sfxToggleImg.sprite = off;
         sfxON = false;
         // print("SFX off ");
     }

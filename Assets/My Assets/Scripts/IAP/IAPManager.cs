@@ -20,9 +20,11 @@ public class IAPManager : MonoBehaviour, IStoreListener
         if (IsInitialized()) { return; }
         var builder = ConfigurationBuilder.Instance(StandardPurchasingModule.Instance());
 
-        foreach (IAP_Product product in allProducts) //Add products to builder with purchasing type (all currently are non consumable)
+        foreach (IAP_Product product in allProducts) //Add products to builder with purchasing type 
         {
-            if (!product.inGameProduct)
+            if (product.inGameProduct)
+                builder.AddProduct(product.ID, ProductType.Consumable);
+            else
                 builder.AddProduct(product.ID, ProductType.NonConsumable);
         }
 
@@ -48,10 +50,18 @@ public class IAPManager : MonoBehaviour, IStoreListener
             PlayerPurchases.instance.ConfirmCurrencyPurchase(args.purchasedProduct.definition.id); //Send purchase confirmation
             NotificationsManager.instance.ShowMessage("Purchase success!");
             PlayerPurchases.instance.UpdateCurrency();
+
+            // if the purchased product is the no add, remove the no ad button on shop
+            if(args.purchasedProduct.definition.id.Equals("com.kabakeb.noads"))
+            {
+                GameManager.instance.RemoveNoAdsBtn();
+            }
+
+            Debug.Log(args.purchasedProduct.definition.id);
             print("confirming purchase id: " + args.purchasedProduct.definition.id);
         } else {
             Debug.Log("Purchase Failed");
-            NotificationsManager.instance.ShowMessage("Purchase failed!");
+            NotificationsManager.instance.ShowMessage("Not Enough Coins!");
         }
         return PurchaseProcessingResult.Complete;
     }
