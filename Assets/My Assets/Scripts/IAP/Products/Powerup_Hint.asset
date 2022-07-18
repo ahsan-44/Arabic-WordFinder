@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: hint_powerup
   productName: Hint Powerup
-  price: 300
+  price: 25
   inGameProduct: 1

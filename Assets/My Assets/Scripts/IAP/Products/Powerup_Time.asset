@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ID: time_powerup
   productName: Time Powerup
-  price: 300
+  price: 25
   inGameProduct: 1

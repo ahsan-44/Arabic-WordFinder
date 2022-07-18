@@ -31,7 +31,7 @@ namespace DTT.MiniGame.WordFinder
             List<string> fittingWords = new List<string>(_settings.possibleWords);
             fittingWords.RemoveAll((word) =>
             {
-                if (word.Length > _settings.gridSize.x && word.Length > _settings.gridSize.y)
+                if (word.Length > _settings.gridSize.x && word.Length > _settings.gridSize.y && word.Length < 0)
                 {
                     Debug.LogWarning("WordFinder: The word " + word + " is too long to fit in the grid.");
                     return true;

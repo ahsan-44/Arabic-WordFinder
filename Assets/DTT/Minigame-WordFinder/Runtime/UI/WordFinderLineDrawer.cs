@@ -167,7 +167,7 @@ namespace DTT.MiniGame.WordFinder
             RectTransform textRext = (RectTransform)_textSizeReference.transform;
             Rect worldRect = textRext.GetWorldRect();
             float lineSize = worldRect.width < worldRect.height ?
-                worldRect.height : worldRect.width;
+                worldRect.height - 0.05f : worldRect.width - 0.05f;
             SetLineSize(lineSize);
 
             Vector2 gridPos = target.GridPosition;

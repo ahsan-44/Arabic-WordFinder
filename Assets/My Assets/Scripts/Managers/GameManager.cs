@@ -21,7 +21,7 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private WordFinderConfig _config;
     [SerializeField]
-    private TextMeshProUGUI scoreText, highscoreText;
+    private TextMeshProUGUI scoreText, highscoreText, gameOverScore;
     [SerializeField]
     private TextAsset _wordListFile;
     private List<string> _wordList, possibleWords;
@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviour
     private TextMeshProUGUI ScoreTest, SecTest;
     
     //Level Progression variables
-    [SerializeField] private int timerBonus, scoreToAdd;
+    [SerializeField] private int timerBonus, scoreToAdd; //score and time to be added when correct word
     private int gridSize, playerScore, highscore, difficultyLevel, hintCounter, currentLevel;
     //
     public bool endlessMode { get; set;}
@@ -91,7 +91,7 @@ public class GameManager : MonoBehaviour
         //Import word list from .txt file
         var content = _wordListFile.text;
         //Clean up text file and add to a list
-        var AllWords = content.Split(new char[] { '\n', '\r', '\t' }, System.StringSplitOptions.RemoveEmptyEntries);
+        var AllWords = content.Split(new char[] { '\n', '\r', '\t', ' '}, System.StringSplitOptions.RemoveEmptyEntries);
         _wordList = new List<string>(AllWords);
         //Setup level UI
 
@@ -196,8 +196,8 @@ public class GameManager : MonoBehaviour
     {
         if (value) //Correct word
         {
-            AddScore(scoreToAdd);
-            AddTime();
+            AddScore(scoreToAdd); //Add score to playerscore
+            AddTime();  //add time to the timer
         } else { //Wrong word
             //AddScore(-difficultyLevel * timerBonus);
             //AddTime(-timerBonus);
@@ -209,8 +209,8 @@ public class GameManager : MonoBehaviour
     {
         if(endlessModePanel.activeSelf)
         {
+            gameOverScore.text = "Score: " + playerScore.ToString();
             gameOverPanel.SetActive(true);
-            //SetStars(0);
             ShowAd();
         }
     }
@@ -268,6 +268,34 @@ public class GameManager : MonoBehaviour
     {
         GameServices.Instance.ShowLeaderboadsUI();
     }
+
+
+    void NewLevel(float startTime)
+    {
+        if (currentLevel != 1) //If not first level, continue timer
+        {
+            _config.maxTime = _wordFinderManager.PlayTime;
+        } else { //First level
+            _config.maxTime = startTime;
+        }
+        //Set level config
+        _config.possibleWords = _wordList;
+        _level.ChangeLevelSettings(_config);
+        //Start new level
+        _wordFinderManager.StartGame(_level);
+        if (hintObj == null) //Hint deleted or not instantiated
+        {
+            hintObj = Instantiate(hintPrefab, transform);
+        }
+        GetWordsInLevel();
+    }
+
+    void GetWordsInLevel()
+    {
+        wordsInLevel = _wordFinderManager.WordsInLevel();
+    }
+
+
 
     void OnEnable()
     {
@@ -330,31 +358,6 @@ public class GameManager : MonoBehaviour
         ResetGame();
         NewLevel(startTime);
         currentLevel = levelNum;
-    }
-
-    void NewLevel(float startTime)
-    {
-        if (currentLevel != 1) //If not first level, continue timer
-        {
-            _config.maxTime = _wordFinderManager.PlayTime;
-        } else { //First level
-            _config.maxTime = startTime;
-        }
-        //Set level config
-        _config.possibleWords = _wordList;
-        _level.ChangeLevelSettings(_config);
-        //Start new level
-        _wordFinderManager.StartGame(_level);
-        if (hintObj == null) //Hint deleted or not instantiated
-        {
-            hintObj = Instantiate(hintPrefab, transform);
-        }
-        GetWordsInLevel();
-    }
-
-    void GetWordsInLevel()
-    {
-        wordsInLevel = _wordFinderManager.WordsInLevel();
     }
 
     public void LevelComplete(WordFinderResult result)
